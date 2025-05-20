@@ -1,5 +1,6 @@
 const express = require('express');
 const userRoutes = require('@http_routes/videoRoutes');
+const imageRoutes = require('@http_routes/imageRoutes');
 const app = express();
 const cors = require('cors');
 const moment = require('moment');
@@ -24,7 +25,8 @@ function healthCheck(req, res) {
     res.json({ status: true, message: 'Video service is running' });
 }
 
-app.use('/video', userRoutes);
+app.use('/upload/video', userRoutes);
+app.use('/upload/image', imageRoutes);
 
 // Cho phép truy cập trực tiếp file ảnh/video qua /uploads
 app.use('/uploads', express.static(path.join(__dirname, '../../storage/uploads')));

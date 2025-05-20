@@ -42,6 +42,23 @@ async function uploadVideoAndThumbnail(videoStream, videoName, thumbnailStream, 
     }
 }
 
+
+async function uploadImage(filecontent, imageName) {
+    try {
+        const imagePath = await saveImage(filecontent, imageName);
+        return {
+            status: true,
+            data: imagePath
+        };
+    } catch (err) {
+        return {
+            status: false,
+            error: err.message
+        };
+    }
+}
+
 module.exports = {
     uploadVideoAndThumbnail,
+    uploadImage,
 };

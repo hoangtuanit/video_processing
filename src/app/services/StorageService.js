@@ -20,7 +20,7 @@ function saveFileWithRule(fileStream, originalName, type) {
         if (baseName.length > MAX_FILE_NAME_LENGTH) {
             baseName = baseName.slice(0, MAX_FILE_NAME_LENGTH);
         }
-        
+
         const timestamp = moment().unix();
         let dir, filename;
         if (type === 'video') {
@@ -41,7 +41,7 @@ function saveFileWithRule(fileStream, originalName, type) {
         const writeStream = fs.createWriteStream(saveTo);
         fileStream.pipe(writeStream);
 
-        const filepath = path.join(dateFolder, filename);   
+        const filepath = path.join(dateFolder, filename);
         writeStream.on('finish', () => resolve(filepath));
         writeStream.on('error', reject);
         fileStream.on('error', reject);
@@ -52,8 +52,8 @@ function saveVideo(fileStream, originalName) {
     return saveFileWithRule(fileStream, originalName, 'video');
 }
 
-function saveImage(fileStream, originalName) {
-    return saveFileWithRule(fileStream, originalName, 'image');
+async function saveImage(filecontent, originalName) {
+    // return saveFileWithRule(filecontent, originalName, 'image');  
 }
 
 module.exports = {

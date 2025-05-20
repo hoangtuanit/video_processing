@@ -1,58 +1,84 @@
 const express = require('express');
 const router = express.Router();
 const Busboy = require('busboy');
-const moment = require('moment');
 const path = require('path');
-const { uploadVideoAndThumbnail } = require('@controllers/StorageController');
+const fs = require('fs');
+const moment = require('moment');
+const { IMAGE_PATH } = require('@config/path');
+const { GenerateFileName } = require('@helpers/file');
 
-router.post('/upload', (req, res) => {
+router.post('/', (req, res) => {
     const busboy = Busboy({ headers: req.headers });
-    let videoStream = null, videoName = null;
-    let thumbnailStream = null, thumbnailName = null;
+    let filePaths = { video: null, thumbnail: null };
+    let finishedCount = 0;
+    let hasError = false;
 
-    console.log('Busboy initialized', req.body);
+    const fileWritePromises = [];
 
-    busboy.on('file', (fieldname, file, payload) => {
-        const { filename, encoding, mimeType } = payload;
-        file.on('data', (data) => {
-            console.log(`File [${filename}] got ${data.length} bytes`);
-        }).on('close', () => {
-            console.log(`File [${filename}] done`);
-            if (fieldname === 'video') {
-                videoStream = file;
-                videoName = payload.filename;
-            } else if (fieldname === 'thumbnail') {
-                thumbnailStream = file;
-                thumbnailName = payload.filename;
-            }
+    busboy.on('file', (formField, filecontent, payload) => {
+        if (hasError) return;
+        const originalName = payload.filename;
+        let fileType = null;
+        let basePath = null;
+        if (formField === 'video') {
+            fileType = 'video';
+            basePath = path.join(IMAGE_PATH, '../videos');
+        } else if (formField === 'thumbnail') {
+            fileType = 'image';
+            basePath = path.join(IMAGE_PATH, '../images');
+        } else {
+            // Skip unknown fields
+            filecontent.resume();
+            return;
+        }
+        const { filename, dateFolder } = GenerateFileName(originalName, fileType);
+        const saved_path = path.join(dateFolder, filename);
+        const full_path = path.join(basePath, saved_path);
+        fs.mkdirSync(path.dirname(full_path), { recursive: true });
+        
+        const writeStream = fs.createWriteStream(full_path);
+        filecontent.pipe(writeStream);
+
+        // Push một Promise cho việc ghi file
+        const writePromise = new Promise((resolve, reject) => {
+            writeStream.on('finish', () => {
+                finishedCount++;
+                filePaths[formField] = saved_path;
+                console.log(`File [${formField}] saved as ${full_path}`);
+                resolve();
+            });
+            writeStream.on('error', reject);
         });
+
+        fileWritePromises.push(writePromise);
     });
 
     busboy.on('error', (err) => {
+        hasError = true;
         console.error('Busboy error:', err);
-        res.status(500).json({ status: false, error: 'Internal server error' });
+        return res.status(500).json({ status: false, error: 'Internal server error' });
     });
-    
+
     busboy.on('finish', async () => {
-        console.log('Busboy finished processing');
-        if (!videoStream || !thumbnailStream) {
-            return res.status(400).json({ status: false, error: 'Video and thumbnail are required' });
-        }
         try {
-            const result = await uploadVideoAndThumbnail(videoStream, videoName, thumbnailStream, thumbnailName);
-            console.log('Upload result:', result);
-            if (result.status) {
-                res.json({ status: true, data: result.data });
-            } else {
-                res.status(500).json({ status: false, error: result.error });
-            }
+            await Promise.all(fileWritePromises); // Đợi tất cả file ghi xong
+
+            console.log(`All files saved: ${finishedCount} files`);
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                status: 'success',
+                message: 'Upload completed successfully',
+                data: filePaths
+            }));
         } catch (err) {
-            console.error('Error during upload:', err);
-            res.status(500).json({ status: false, error: err.message });
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'error', message: 'Failed to save files', error: err.message }));
         }
     });
 
     req.pipe(busboy);
-});
+})
+
 
 module.exports = router;
