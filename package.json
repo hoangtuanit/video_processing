@@ -1,0 +1,36 @@
+{
+    "name": "video-processing",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "start": "nodemon src/index.js"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    },
+    "dependencies": {
+        "@grpc/grpc-js": "^1.9.14",
+        "@grpc/proto-loader": "^0.7.11",
+        "axios": "^1.6.0",
+        "busboy": "^1.6.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.5.0",
+        "express": "^5.1.0",
+        "module-alias": "^2.2.3",
+        "moment": "^2.30.1",
+        "pusher": "^5.2.0"
+    },
+    "_moduleAliases": {
+        "@root": "src",
+        "@services": "src/app/services",
+        "@helpers": "src/helpers",
+        "@config": "src/config",
+        "@controllers": "src/app/controllers",
+        "@middlewares": "src/middlewares",
+        "@http_routes": "src/infrastructure/http/routes",
+        "@models": "src/models",
+        "@infrastructure": "src/infrastructure",
+        "@storage": "src/storage",
+        "@uploads": "src/storage/uploads"  
+    }
+}

@@ -1,0 +1,13 @@
+### VIDEO CONVERT
+POST http://localhost:4001/convert
+Content-Type: application/json
+
+
+### Upload video
+POST http://localhost:4001/video/upload 
+Content-Type: multipart/form-data
+Accept: application/json
+
+{
+  "file": "/home/hoangtuan/Videos/BigBuckBunny.mp4"
+}
